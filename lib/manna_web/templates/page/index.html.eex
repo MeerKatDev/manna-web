@@ -1,4 +1,5 @@
 <section class="row">
+  <p>Aggiungi Add file a Base file</p>
   <div style="border:1px solid black;">
   <%= form_for @conn, "/process", [multipart: true], fn f -> %>
     <div class="form-group">
@@ -14,5 +15,18 @@
       <%= submit "Submit", class: "btn btn-primary" %>
     </div>
   <% end %>
-</div>
+  </div>
+  <p>Bonifica file</p>
+  <div style="border:1px solid black;">
+  <%= form_for @conn, "/normalize", [multipart: true], fn f -> %>
+    <div class="form-group">
+      <label>File</label>
+      <%= file_input f, :file, class: "form-control" %>
+    </div>
+    <div class="form-group">
+      <%= submit "Submit", class: "btn btn-primary" %>
+    </div>
+  <% end %>
+  </div>
+  Limite upload: 900 000 000 byte (~900 MB)
 </section>

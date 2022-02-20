@@ -7,6 +7,35 @@ defmodule MannaWeb.PageController do
     render(conn, "index.html")
   end
 
+  defp gender("f"), do: "Donna"
+  defp gender("m"), do: "Uomo"
+  defp gender(""), do: ""
+  defp gender(_), do: "0"
+
+  def normalize(conn, %{"file" => %Plug.Upload{path: file_path}}) do
+
+    converted = "/tmp/converted.csv"
+    stream_file = File.stream!(converted, [:write])
+
+    file_path
+    |> File.stream!
+    |> Stream.drop(1)
+    |> Task.async_stream(fn line ->
+      IO.inspect line
+      [email, nome, sesso, _data_nascita, create_ip, create_ts, url | _] = String.split(line, ",")
+
+      ["id0", create_ip, create_ts, email, gender(sesso) , nome , "", "0", "", "0", "", "", "#{url}\n" ]
+      |> Enum.join(";")
+    end)
+    |> Stream.map(&elem(&1, 1))
+    |> Stream.into(stream_file)
+    |> Stream.run()
+
+    conn
+    |> put_resp_header("content-disposition", ~s(attachment; filename="converted.csv"))
+    |> send_file(200, converted)
+  end
+
   def process(conn, %{
     "add_file" => %Plug.Upload{path: add_file_path},
     "base_file" => %Plug.Upload{path: base_file_path}
@@ -34,8 +63,7 @@ defmodule MannaWeb.PageController do
     |> then(fn stream ->
       :ok = Stream.into(stream, File.stream!(rows_added, [:write])) |> Stream.run()
       :ok = Stream.into(stream, File.stream!(base_file_path, [:append])) |> Stream.run()
-    end)
-    |> then(fn _ ->
+
       :ets.delete(@table_name)
 
       files = [
