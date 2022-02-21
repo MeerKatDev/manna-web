@@ -29,6 +29,9 @@ defmodule MannaWeb.PageController do
   defp gender(g), do: g
 
   def normalize(conn, %{"file" => %Plug.Upload{path: file_path}, "column" => cols}) do
+
+    IO.inspect System.schedulers_online(), label: "Online schedulers"
+
     converted = "/tmp/converted.csv"
     stream_file = File.stream!(converted, [:write])
 
@@ -51,7 +54,7 @@ defmodule MannaWeb.PageController do
       |> List.update_at(3, &gender/1)
       |> List.update_at(-1, &"#{&1}\n")
       |> Enum.join(";")
-    end)
+    end, max_concurrency: (System.schedulers_online() * 2))
     |> Stream.map(&elem(&1, 1))
     |> Stream.into(stream_file)
     |> Stream.run()
@@ -67,6 +70,8 @@ defmodule MannaWeb.PageController do
       }) do
     true = :ets.new(@table_name, [:set, :public, :named_table])
 
+    IO.inspect System.schedulers_online(), label: "Online schedulers"
+
     rows_added = "/tmp/rows_added.csv"
     {:ok, _file_db} = File.open(rows_added, [:write])
 
@@ -81,7 +86,7 @@ defmodule MannaWeb.PageController do
     add_file_path
     |> File.stream!()
     |> Stream.drop(1)
-    |> Task.async_stream(&filter_line/1)
+    |> Task.async_stream(&filter_line/1, max_concurrency: (System.schedulers_online() * 2))
     |> Stream.filter(&(not match?({:ok, nil}, &1)))
     |> Stream.map(&elem(&1, 1))
     |> then(fn stream ->
