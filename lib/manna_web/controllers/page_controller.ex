@@ -23,11 +23,6 @@ defmodule MannaWeb.PageController do
     render(conn, "index.html")
   end
 
-  defp gender("f"), do: "Donna"
-  defp gender("m"), do: "Uomo"
-  defp gender("ND"), do: "ND"
-  defp gender(g), do: g
-
   def normalize(conn, %{"file" => %Plug.Upload{path: file_path}, "column" => cols}) do
 
     IO.inspect System.schedulers_online(), label: "Online schedulers"
@@ -38,23 +33,7 @@ defmodule MannaWeb.PageController do
     file_path
     |> File.stream!()
     |> Stream.drop(1)
-    |> Task.async_stream(fn line ->
-      fields = String.split(line, ",")
-
-      @csv_fields
-      |> Keyword.keys()
-      |> Enum.map(fn label ->
-        cols[to_string(label)]
-        |> Integer.parse()
-        |> case do
-          {idx, ""} -> Enum.at(fields, idx)
-          :error    -> "ND"
-        end
-      end)
-      |> List.update_at(3, &gender/1)
-      |> List.update_at(-1, &"#{&1}\n")
-      |> Enum.join(";")
-    end, max_concurrency: (System.schedulers_online() * 2))
+    |> Task.async_stream(&convert_columns/1, max_concurrency: (System.schedulers_online() * 2))
     |> Stream.map(&elem(&1, 1))
     |> Stream.into(stream_file)
     |> Stream.run()
@@ -107,6 +86,31 @@ defmodule MannaWeb.PageController do
       |> put_resp_header("content-disposition", ~s(attachment; filename="#{zip_filename}"))
       |> send_file(200, zip_filename)
     end)
+  end
+
+  defp gender("f"), do: "Donna"
+  defp gender("m"), do: "Uomo"
+  defp gender("ND"), do: "ND"
+  defp gender(g), do: g
+
+  defp convert_columns(line) do
+    @csv_fields
+    |> Keyword.keys()
+    |> Enum.map(fn label ->
+      cols
+      |> Map.get(to_string(label))
+      |> Integer.parse()
+      |> case do
+        {idx, ""} ->
+          line
+          |> String.split(",")
+          |> Enum.at(idx)
+        :error    -> "ND"
+      end
+    end)
+    |> List.update_at(3, &gender/1)
+    |> List.update_at(-1, &"#{&1}\n")
+    |> Enum.join(";")
   end
 
   defp get_number(line) do

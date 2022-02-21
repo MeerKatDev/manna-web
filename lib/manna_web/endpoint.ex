@@ -23,9 +23,10 @@ defmodule MannaWeb.Endpoint do
   plug Plug.RequestId
 
   plug Plug.Parsers,
-    parsers: [:urlencoded, :multipart, :json],
+    parsers: [:urlencoded,
+      {:multipart, length: 900_000_000},
+      :json],
     pass: ["*/*"],
-    length: 900_000_000,
     json_decoder: Phoenix.json_library()
 
   plug Plug.MethodOverride
