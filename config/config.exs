@@ -11,8 +11,9 @@ import Config
 config :manna, MannaWeb.Endpoint,
   url: [host: "localhost"],
   render_errors: [view: MannaWeb.ErrorView, accepts: ~w(html json), layout: false]
-  # pubsub_server: Manna.PubSub,
-  # live_view: [signing_salt: "jp4iZMt7"]
+
+# pubsub_server: Manna.PubSub,
+# live_view: [signing_salt: "jp4iZMt7"]
 
 # Configure esbuild (the version is required)
 config :esbuild,

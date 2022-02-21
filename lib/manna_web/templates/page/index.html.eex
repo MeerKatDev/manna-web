@@ -23,6 +23,30 @@
       <label>File</label>
       <%= file_input f, :file, class: "form-control" %>
     </div>
+    <p>
+      Si assume questo formato:<br/>
+      <%= csv_fields() |> Keyword.values() |> Enum.join(";") %><br/>
+      L'indice delle colonne parte da 0. Il genere f/m e' automaticamente tradotto a Donna/Uomo.
+    </p>
+    <p>Colonne:</p>
+    <div class="form-group">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Indice nel file</th>
+          </tr>
+        </thead>
+        <tbody>
+        <%= for {k,v} <- csv_fields() do %>
+        <tr>
+          <td><label><%= v %></label></td>
+          <td><%= number_input f, :"column[#{k}]", class: "form-control" %></td>
+        </tr>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
     <div class="form-group">
       <%= submit "Submit", class: "btn btn-primary" %>
     </div>

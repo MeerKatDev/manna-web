@@ -14,10 +14,11 @@ config :manna, MannaWeb.Endpoint,
   code_reloader: false,
   debug_errors: true,
   secret_key_base: "RDL5/syro5EHWDlIDKMNRsqdYiWd84u1CfVG9PFp1MjByjcqLgrJ/6Ak/r+5ywot"
-  # watchers: [
-  #   # Start the esbuild watcher by calling Esbuild.install_and_run(:default, args)
-  #   esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]}
-  # ]
+
+# watchers: [
+#   # Start the esbuild watcher by calling Esbuild.install_and_run(:default, args)
+#   esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]}
+# ]
 
 # ## SSL Support
 #
