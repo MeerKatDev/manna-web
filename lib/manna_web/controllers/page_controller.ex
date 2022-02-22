@@ -33,7 +33,7 @@ defmodule MannaWeb.PageController do
     file_path
     |> File.stream!()
     |> Stream.drop(1)
-    |> Task.async_stream(&convert_columns/1, max_concurrency: (System.schedulers_online() * 2))
+    |> Task.async_stream(&convert_columns(&1, cols), max_concurrency: (System.schedulers_online() * 2))
     |> Stream.map(&elem(&1, 1))
     |> Stream.into(stream_file)
     |> Stream.run()
@@ -93,7 +93,7 @@ defmodule MannaWeb.PageController do
   defp gender("ND"), do: "ND"
   defp gender(g), do: g
 
-  defp convert_columns(line) do
+  defp convert_columns(line, cols) do
     @csv_fields
     |> Keyword.keys()
     |> Enum.map(fn label ->
