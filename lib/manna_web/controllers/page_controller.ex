@@ -47,7 +47,7 @@ defmodule MannaWeb.PageController do
         "add_file" => %Plug.Upload{path: add_file_path},
         "base_file" => %Plug.Upload{path: base_file_path}
       }) do
-    true = :ets.new(@table_name, [:set, :public, :named_table])
+    :ets.new(@table_name, [:set, :public, :named_table])
 
     IO.inspect System.schedulers_online(), label: "Online schedulers"
 
