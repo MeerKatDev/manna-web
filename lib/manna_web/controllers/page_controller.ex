@@ -23,7 +23,7 @@ defmodule MannaWeb.PageController do
     render(conn, "index.html")
   end
 
-  def normalize(conn, %{"file" => %Plug.Upload{path: file_path}, "column" => cols}) do
+  def normalize(conn, %{"file" => %Plug.Upload{path: file_path}, "column" => cols, "sep" => sep}) do
 
     IO.inspect System.schedulers_online(), label: "Online schedulers"
 
@@ -33,7 +33,7 @@ defmodule MannaWeb.PageController do
     file_path
     |> File.stream!()
     |> Stream.drop(1)
-    |> Task.async_stream(&convert_columns(&1, cols), max_concurrency: (System.schedulers_online() * 2))
+    |> Task.async_stream(&convert_columns(&1, cols, sep), max_concurrency: (System.schedulers_online() * 2))
     |> Stream.map(&elem(&1, 1))
     |> Stream.into(stream_file)
     |> Stream.run()
@@ -93,7 +93,7 @@ defmodule MannaWeb.PageController do
   defp gender("ND"), do: "ND"
   defp gender(g), do: g
 
-  defp convert_columns(line, cols) do
+  defp convert_columns(line, cols, sep) do
     @csv_fields
     |> Keyword.keys()
     |> Enum.map(fn label ->
@@ -103,7 +103,7 @@ defmodule MannaWeb.PageController do
       |> case do
         {idx, ""} ->
           line
-          |> String.split(",")
+          |> String.split(sep)
           |> Enum.at(idx)
         :error    -> "ND"
       end

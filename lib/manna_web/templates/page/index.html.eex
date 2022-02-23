@@ -30,6 +30,10 @@
     </p>
     <p>Colonne:</p>
     <div class="form-group">
+      <label>Separator</label>
+      <%= text_input f, :sep, class: "form-control", value: ";" %>
+    </div>
+    <div class="form-group">
       <table>
         <thead>
           <tr>
