@@ -105,6 +105,7 @@ defmodule MannaWeb.PageController do
           line
           |> String.split(sep)
           |> Enum.at(idx)
+          |> String.trim
         :error    -> "ND"
       end
     end)
