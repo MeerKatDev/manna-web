@@ -106,6 +106,7 @@ defmodule MannaWeb.PageController do
           |> String.split(sep)
           |> Enum.at(idx)
           |> String.trim
+
         :error    -> "ND"
       end
     end)
@@ -116,7 +117,7 @@ defmodule MannaWeb.PageController do
 
   defp get_number(line) do
     num = line |> String.split(";") |> Enum.at(7)
-    true = :ets.insert(:numbers, {num, 1})
+    true = :ets.insert(@table_name, {num, 1})
   end
 
   defp filter_line(line) do
