@@ -5,10 +5,19 @@
     <div class="form-group">
       <label>Base file</label>
       <%= file_input f, :base_file, class: "form-control" %>
+      <label>Base Separator</label>
+      <%= text_input f, :base_sep, class: "form-control", value: ";" %>
     </div>
     <div class="form-group">
       <label>Add file</label>
       <%= file_input f, :add_file, class: "form-control" %>
+      <label>Add Separator</label>
+      <%= text_input f, :add_sep, class: "form-control", value: ";" %>
+    </div>
+
+    <div class="form-group">
+      <label>Indice del campo di riferimento (7 - numero)</label>
+      <%= number_input f, :index_dedup, class: "form-control", value: 7 %>
     </div>
 
     <div class="form-group">
@@ -56,5 +65,26 @@
     </div>
   <% end %>
   </div>
-  Limite upload: 900 000 000 byte (~900 MB)
+  Limite upload: 4 900 000 000 byte (~4.9 GB)
+  <p>Aggiungi md5 (; - separatore default)</p>
+  <div style="border:1px solid black;">
+  <%= form_for @conn, "/md5_column", [multipart: true], fn f -> %>
+    <div class="form-group">
+      <label>File</label>
+      <%= file_input f, :base_file, class: "form-control" %>
+    </div>
+
+    <div class="form-group">
+      <label>Indice del campo da -md5 (la colonna sara' messa ultima)</label>
+      <%= number_input f, :index, class: "form-control" %>
+    </div>
+    <div class="form-group">
+      <label>Separator</label>
+      <%= text_input f, :sep, class: "form-control", value: ";" %>
+    </div>
+    <div class="form-group">
+      <%= submit "Submit", class: "btn btn-primary" %>
+    </div>
+  <% end %>
+  </div>
 </section>

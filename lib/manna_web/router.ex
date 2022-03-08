@@ -16,5 +16,6 @@ defmodule MannaWeb.Router do
     get "/", PageController, :index
     post "/process", PageController, :process
     post "/normalize", PageController, :normalize
+    post "/md5_column", PageController, :md5_column
   end
 end

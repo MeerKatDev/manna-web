@@ -23,6 +23,26 @@ defmodule MannaWeb.PageController do
     render(conn, "index.html")
   end
 
+  def md5_column(conn, %{"base_file" => %Plug.Upload{path: file_path}, "index" => index, "sep" => sep}) do
+    result_file = "/tmp/result.csv"
+    stream_file = File.stream!(result_file, [:write])
+
+    {idx, ""} = Integer.parse(index)
+
+    file_path
+    |> File.stream!()
+    |> Stream.drop(1)
+    |> Task.async_stream(&column_to_md5(&1, idx, sep), max_concurrency: (System.schedulers_online() * 2))
+    |> Stream.map(&elem(&1, 1))
+    |> Stream.into(stream_file)
+    |> Stream.run()
+
+    conn
+    |> put_resp_header("content-disposition", ~s(attachment; filename="result.csv"))
+    |> send_file(200, result_file)
+
+  end
+
   def normalize(conn, %{"file" => %Plug.Upload{path: file_path}, "column" => cols, "sep" => sep}) do
 
     IO.inspect System.schedulers_online(), label: "Online schedulers"
@@ -45,11 +65,16 @@ defmodule MannaWeb.PageController do
 
   def process(conn, %{
         "add_file" => %Plug.Upload{path: add_file_path},
-        "base_file" => %Plug.Upload{path: base_file_path}
+        "base_file" => %Plug.Upload{path: base_file_path},
+        "index_dedup" => index,
+        "base_sep" => base_sep,
+        "add_sep" => add_sep,
       }) do
     :ets.new(@table_name, [:set, :public, :named_table])
 
     IO.inspect System.schedulers_online(), label: "Online schedulers"
+
+    {idx, ""} = Integer.parse(index)
 
     rows_added = "/tmp/rows_added.csv"
     {:ok, _file_db} = File.open(rows_added, [:write])
@@ -57,7 +82,7 @@ defmodule MannaWeb.PageController do
     base_file_path
     |> File.stream!()
     |> Stream.drop(1)
-    |> Task.async_stream(&get_number/1)
+    |> Task.async_stream(&get_number(&1, idx, base_sep))
     |> Stream.run()
 
     IO.inspect(length(:ets.tab2list(@table_name)), label: "ETS records inserted")
@@ -65,7 +90,7 @@ defmodule MannaWeb.PageController do
     add_file_path
     |> File.stream!()
     |> Stream.drop(1)
-    |> Task.async_stream(&filter_line/1, max_concurrency: (System.schedulers_online() * 2))
+    |> Task.async_stream(&filter_line(&1, idx, add_sep), max_concurrency: (System.schedulers_online() * 2))
     |> Stream.filter(&(not match?({:ok, nil}, &1)))
     |> Stream.map(&elem(&1, 1))
     |> then(fn stream ->
@@ -112,18 +137,30 @@ defmodule MannaWeb.PageController do
     end)
     |> List.update_at(3, &gender/1)
     |> List.update_at(-1, &"#{&1}\n")
-    |> Enum.join(";")
+    |> Enum.join(sep)
   end
 
-  defp get_number(line) do
-    num = line |> String.split(";") |> Enum.at(7)
-    true = :ets.insert(@table_name, {num, 1})
+  defp get_number(line, idx, sep) do
+    field = line |> String.split(sep) |> Enum.at(idx)
+    true = :ets.insert(@table_name, {field, 1})
   end
 
-  defp filter_line(line) do
+  defp column_to_md5(line, idx, sep) do
+    field = line |> String.split(sep) |> Enum.at(idx)
+    md5ed_fields = :crypto.hash(:md5 , field) |> Base.encode16()
+    String.trim(line)
+    |> String.ends_with?(sep)
+    |> if do
+      line <> md5ed_fields <> sep
+    else
+      line <> sep <> md5ed_fields
+    end
+  end
+
+  defp filter_line(line, idx, sep) do
     line
-    |> String.split(";")
-    |> Enum.at(7)
+    |> String.split(sep)
+    |> Enum.at(idx)
     |> then(fn x ->
       Enum.empty?(:ets.lookup(@table_name, x))
     end)
