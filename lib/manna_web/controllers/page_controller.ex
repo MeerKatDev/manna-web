@@ -145,7 +145,8 @@ defmodule MannaWeb.PageController do
     true = :ets.insert(@table_name, {field, 1})
   end
 
-  defp column_to_md5(line, idx, sep) do
+  defp column_to_md5(line_untrimmed, idx, sep) do
+    line = line_untrimmed |> String.trim()
     field = line |> String.split(sep) |> Enum.at(idx)
     md5ed_fields = :crypto.hash(:md5 , field) |> Base.encode16()
     String.trim(line)
@@ -155,6 +156,7 @@ defmodule MannaWeb.PageController do
     else
       line <> sep <> md5ed_fields
     end
+    |> then(&"#{&1}\n")
   end
 
   defp filter_line(line, idx, sep) do
